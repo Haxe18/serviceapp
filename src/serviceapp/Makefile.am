@@ -16,6 +16,7 @@ plugindir = $(libdir)/enigma2/python/Plugins/SystemPlugins/ServiceApp
 plugin_LTLIBRARIES = serviceapp.la
 
 serviceapp_la_SOURCES = \
+	connections.cpp \
 	serviceapp.cpp \
 	extplayer.cpp \
 	scriptrun.cpp \

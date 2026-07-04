@@ -39,9 +39,9 @@ public:
 
 
 #if SIGCXX_MAJOR_VERSION == 2
-class ResolveUrl: public sigc::trackable, public eThread, public eMainloop
+class ResolveUrl: public sigc::trackable, public eThread, public eMainloop_native
 #else
-class ResolveUrl: public Object, public eThread, public eMainloop
+class ResolveUrl: public Object, public eThread, public eMainloop_native
 #endif
 {
     struct Message
@@ -54,6 +54,7 @@ class ResolveUrl: public Object, public eThread, public eMainloop
             stop,
             tStop,
         };
+        Message() :type(0) {}
         Message(int type)
             :type(type) {}
     };

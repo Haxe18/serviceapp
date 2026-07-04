@@ -16,6 +16,10 @@
 #include <lib/gui/esubtitle.h>
 #include <lib/dvb/idvb.h>
 
+#ifndef sBuffer
+#define sBuffer 0x1000
+#endif
+
 #include "serviceapp.h"
 #include "gstplayer.h"
 #include "exteplayer3.h"
@@ -247,7 +251,7 @@ eServiceApp::~eServiceApp()
 	delete extplayer;
 	delete m_resolver;
 
-	if (m_subtitle_widget) m_subtitle_widget->destroy();
+	//if (m_subtitle_widget) m_subtitle_widget->destroy();
 	m_subtitle_widget = 0;
 #ifdef HAVE_EPG
 	m_nownext_timer->stop();
@@ -901,9 +905,8 @@ RESULT eServiceApp::getTrackInfo(iAudioTrackInfo& trackInfo, unsigned int n)
 	{
 		return -1;
 	}
-	trackInfo.m_description = track.description;
-	trackInfo.m_language = track.language_code;
-	trackInfo.m_pid = track.id;
+	trackInfo = iAudioTrackInfo(iAudioTrackInfo::atMPEG, track.id,
+		track.language_code, track.description);
 	return 0;
 }
 
@@ -985,7 +988,7 @@ RESULT eServiceApp::disableSubtitles()
 	m_embedded_subtitle_pages.clear();
 	m_subtitle_pages = NULL;
 	m_selected_subtitle_track = NULL;
-	if (m_subtitle_widget) m_subtitle_widget->destroy();
+	//if (m_subtitle_widget) m_subtitle_widget->destroy();
 	m_subtitle_widget = 0;
 
 	m_decoder_time_valid_state = 0;

@@ -124,7 +124,7 @@ public:
 	RESULT subServices(ePtr<iSubserviceList> &ptr){ ptr=this; return 0;};
 	RESULT frontendInfo(ePtr<iFrontendInformation> &ptr){ ptr=0; return -1;};
 	RESULT timeshift(ePtr<iTimeshiftService> &ptr){ ptr=0; return -1;};
-	RESULT tap(ePtr<iTapService> &ptr) { ptr = nullptr; return -1; };
+	RESULT tap(ePtr<iTapService> &ptr) { ptr = 0; return -1; };
 	RESULT cueSheet(ePtr<iCueSheet> &ptr){ ptr=0; return -1;};
 	RESULT subtitle(ePtr<iSubtitleOutput> &ptr){ ptr=this; return 0;};
 	RESULT audioDelay(ePtr<iAudioDelay> &ptr){ ptr=0; return -1;};
@@ -149,8 +149,10 @@ public:
 	RESULT isCurrentlySeekable();
 
 	// iStreamedService
-	ePtr<iStreamBufferInfo> getBufferCharge(){ return 0; };
-	int setBufferSize(int size){ (void)size; }
+	ePtr<iStreamBufferInfo> getBufferCharge(){ return 0; }
+	virtual std::list<int> getBufferCharge() const { return std::list<int>(); }
+	virtual void setTransportHeaders(stringMap headers) { (void)headers; }
+	int setBufferSize(int size){ (void)size; return -1; }
 
 	// iAudioTrackSelection
 	int getNumberOfTracks();

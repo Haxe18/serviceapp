@@ -181,9 +181,9 @@ public:
 
 
 #if SIGCXX_MAJOR_VERSION == 2
-class PlayerBackend: public sigc::trackable, public eThread, public eMainloop, public iPlayerCallback
+class PlayerBackend: public sigc::trackable, public eThread, public eMainloop_native, public iPlayerCallback
 #else
-class PlayerBackend: public Object, public eThread, public eMainloop, public iPlayerCallback
+class PlayerBackend: public Object, public eThread, public eMainloop_native, public iPlayerCallback
 #endif
 {
 	struct Message
@@ -221,6 +221,7 @@ class PlayerBackend: public Object, public eThread, public eMainloop, public iPl
 			subtitleAvailable,
 			error,
 		};
+		Message() :type(0), dataInt(0) {}
 		Message(int type)
 			:type(type), dataInt(0) {}
 		Message(int type, int dataInt)
