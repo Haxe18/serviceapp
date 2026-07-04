@@ -2,6 +2,7 @@ AM_CFLAGS = \
 	-Wall
 
 AM_CPPFLAGS = \
+	-I$(top_srcdir)/compat \
 	@PYTHON_CPPFLAGS@ \
 	-include Python.h
 
