@@ -248,6 +248,8 @@ class PlayerBackend: public Object, public eThread, public eMainloop_native, pub
 	unsigned int mTimerDelay;
 
 	eSingleLock mSubLock;
+	// protects mAudioStreams/mSubtitleStreams/pCurrent* (parser thread vs e2 main thread)
+	eSingleLock mStreamsLock;
 	
 	pthread_mutex_t mWaitMutex;
 	pthread_cond_t mWaitCond;
