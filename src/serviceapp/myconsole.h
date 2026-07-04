@@ -50,11 +50,11 @@ public:
     void write( const char *data, int len );
     void setFileFD(int num, int fd) { if (num >= 0 && num <= 2) filefd[num] = fd; }
     bool running() { return (fd[0]!=-1) && (fd[1]!=-1) && (fd[2]!=-1); }
-    PSignal1<void, const char*> dataAvail;
-    PSignal1<void, const char*> stdoutAvail;
-    PSignal1<void, const char*> stderrAvail;
-    PSignal1<void,int> dataSent;
-    PSignal1<void,int> appClosed;
+    sigc::signal1<void, const char*> dataAvail;
+    sigc::signal1<void, const char*> stdoutAvail;
+    sigc::signal1<void, const char*> stderrAvail;
+    sigc::signal1<void,int> dataSent;
+    sigc::signal1<void,int> appClosed;
 };
 
 #endif // __LIB_MY_CONSOLE_H__

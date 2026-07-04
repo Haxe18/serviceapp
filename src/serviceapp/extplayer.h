@@ -350,7 +350,7 @@ public:
 	int subtitleGetCurrentTrackNum();
 	int videoGetTrackInfo(videoStream& trackInfo, int trackId);
 
-	PSignal1<void,int> gotPlayerMessage;
+	sigc::signal1<void,int> gotPlayerMessage;
 };
 
 class WaitThread: public eThread

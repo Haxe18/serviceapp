@@ -34,7 +34,7 @@ public:
     std::string getStdOut(){return m_stdout;}
     std::string getStdErr(){return m_stderr;}
 
-    PSignal1<void, int> scriptEnded;
+    sigc::signal1<void, int> scriptEnded;
 };
 
 
