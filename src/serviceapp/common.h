@@ -23,6 +23,29 @@ typedef std::map<std::string, std::string> HeaderMap;
 typedef std::map<std::string, SettingEntry> SettingMap;
 typedef SettingMap::const_iterator SettingIter;
 
+#include <cJSON/cJSON.h>
+
+// NULL-/typsichere cJSON-Zugriffe. exteplayer3/gstplayer sprechen ueber stdout
+// mit einem externen Prozess, der abstuerzen und Felder weglassen oder falsch
+// typisieren kann; cJSON_GetObjectItem liefert dann NULL bzw. der Knoten hat
+// keinen valuestring -> ungeprueftes ->valueint/->valuestring = SIGSEGV. Diese
+// Helfer liefern in dem Fall einen Default statt zu derefencieren.
+static inline int cJsonGetInt(cJSON *obj, const char *key, int def = 0)
+{
+	cJSON *n = obj ? cJSON_GetObjectItem(obj, key) : 0;
+	return (n && n->type == cJSON_Number) ? n->valueint : def;
+}
+static inline double cJsonGetDouble(cJSON *obj, const char *key, double def = 0.0)
+{
+	cJSON *n = obj ? cJSON_GetObjectItem(obj, key) : 0;
+	return (n && n->type == cJSON_Number) ? n->valuedouble : def;
+}
+static inline std::string cJsonGetStr(cJSON *obj, const char *key)
+{
+	cJSON *n = obj ? cJSON_GetObjectItem(obj, key) : 0;
+	return (n && n->type == cJSON_String && n->valuestring) ? std::string(n->valuestring) : std::string();
+}
+
 class IOption
 {
 public:

@@ -43,7 +43,7 @@ int GstPlayerOptions::update(const std::string &key, const std::string &val)
 				entry.setValue(0);
 			else
 			{
-				eWarning("GstPlayerOptions::update - invalid value '%s' for '%s' setting, allowed values are 0|1", key.c_str(), val.c_str());
+				eWarning("GstPlayerOptions::update - invalid value '%s' for '%s' setting, allowed values are 0|1", val.c_str(), key.c_str());
 				ret = -2;
 			}
 		}
@@ -197,43 +197,45 @@ void GstPlayer::handleJsonOutput(cJSON *json)
 		return;
 	}
 	const char *key = json->child->string;
+	if (!key)
+		return;
 	cJSON* value = cJSON_GetObjectItem(json, key);
 
 	if (!strcmp(key, "PLAYBACK_PLAY"))
 	{
-		if (!cJSON_GetObjectItem(value, "sts")->valueint)
+		if (!cJsonGetInt(value, "sts"))
 		{
 			recvStarted(0);
 		}
 	}
 	else if (!strcmp(key, "PLAYBACK_INFO"))
 	{
-//		int isPlaying = cJSON_GetObjectItem(value, "isPlaying")->valueint;
-//		int isPaused = cJSON_GetObjectItem(value, "isPaused")->valueint;
-//		int isForwarding = cJSON_GetObjectItem(value, "isForwarding")->valueint;
-//		int isSeeking = cJSON_GetObjectItem(value, "isSeeking")->valueint;
-//		int isCreatingPhase = cJSON_GetObjectItem(value, "isCreatingPhase")->valueint;
-//		float backWard = cJSON_GetObjectItem(value, "BackWard")->valuedouble;
-//		int slowMotion = cJSON_GetObjectItem(value, "SlowMotion")->valueint;
-//		int speed = cJSON_GetObjectItem(value, "Speed")->valueint;
-//		int avSync = cJSON_GetObjectItem(value, "AVSync")->valueint;
-//		int isAudio = cJSON_GetObjectItem(value, "isAudio")->valueint;
-//		int isVideo = cJSON_GetObjectItem(value, "isVideo")->valueint;
-//		int isSubtitle = cJSON_GetObjectItem(value, "isSubtitle")->valueint;
+//		int isPlaying = cJsonGetInt(value, "isPlaying");
+//		int isPaused = cJsonGetInt(value, "isPaused");
+//		int isForwarding = cJsonGetInt(value, "isForwarding");
+//		int isSeeking = cJsonGetInt(value, "isSeeking");
+//		int isCreatingPhase = cJsonGetInt(value, "isCreatingPhase");
+//		float backWard = cJsonGetDouble(value, "BackWard");
+//		int slowMotion = cJsonGetInt(value, "SlowMotion");
+//		int speed = cJsonGetInt(value, "Speed");
+//		int avSync = cJsonGetInt(value, "AVSync");
+//		int isAudio = cJsonGetInt(value, "isAudio");
+//		int isVideo = cJsonGetInt(value, "isVideo");
+//		int isSubtitle = cJsonGetInt(value, "isSubtitle");
 	}
 	else if (!strcmp(key, "v_c"))
 	{
 		videoStream v;
-		v.id = cJSON_GetObjectItem(value, "id")->valueint;
-		v.description = cJSON_GetObjectItem(value, "e")->valuestring;
-		v.language_code = cJSON_GetObjectItem(value, "n")->valuestring;
-		v.width = cJSON_GetObjectItem(value, "w")->valueint;
-		v.height = cJSON_GetObjectItem(value, "h")->valueint;
-		v.framerate = cJSON_GetObjectItem(value, "f")->valueint;
+		v.id = cJsonGetInt(value, "id");
+		v.description = cJsonGetStr(value, "e");
+		v.language_code = cJsonGetStr(value, "n");
+		v.width = cJsonGetInt(value, "w");
+		v.height = cJsonGetInt(value, "h");
+		v.framerate = cJsonGetInt(value, "f");
 		
 		// this would crash if somebody was using older version
 		// of gstplayer where progressive was not passed
-		cJSON *progressive = cJSON_GetObjectItem(value, "p");
+		cJSON *progressive = value ? cJSON_GetObjectItem(value, "p") : 0;
 		if (progressive != NULL)
 		{
 			v.progressive = progressive->valueint;
@@ -242,9 +244,9 @@ void GstPlayer::handleJsonOutput(cJSON *json)
 	}
 	else if (!strcmp(key, "a_s"))
 	{
-		if (!cJSON_GetObjectItem(value, "sts")->valueint)
+		if (!cJsonGetInt(value, "sts"))
 		{
-			int s = cJSON_GetObjectItem(value, "id")->valueint;
+			int s = cJsonGetInt(value, "id");
 			recvAudioTrackSelected(0, s);
 			return;
 		}
@@ -253,9 +255,9 @@ void GstPlayer::handleJsonOutput(cJSON *json)
 	else if (!strcmp(key, "a_c"))
 	{
 		audioStream a;
-		a.id = cJSON_GetObjectItem(value, "id")->valueint;
-		a.description = cJSON_GetObjectItem(value, "e")->valuestring;
-		a.language_code = cJSON_GetObjectItem(value, "n")->valuestring;
+		a.id = cJsonGetInt(value, "id");
+		a.description = cJsonGetStr(value, "e");
+		a.language_code = cJsonGetStr(value, "n");
 		recvAudioTrackCurrent(0, a);
 	}
 	else if (!strcmp(key, "a_l"))
@@ -265,18 +267,18 @@ void GstPlayer::handleJsonOutput(cJSON *json)
 		{
 			cJSON *subitem=cJSON_GetArrayItem(value,i);
 			audioStream a;
-			a.id = cJSON_GetObjectItem(subitem, "id")->valueint; 
-			a.description = cJSON_GetObjectItem(subitem, "e")->valuestring;
-			a.language_code = cJSON_GetObjectItem(subitem, "n")->valuestring;
+			a.id = cJsonGetInt(subitem, "id"); 
+			a.description = cJsonGetStr(subitem, "e");
+			a.language_code = cJsonGetStr(subitem, "n");
 			streams.push_back(a);
 		}
 		recvAudioTracksList(0, streams);
 	}
 	else if (!strcmp(key, "s_s"))
 	{
-		if (!cJSON_GetObjectItem(value, "sts")->valueint)
+		if (!cJsonGetInt(value, "sts"))
 		{
-			int s = cJSON_GetObjectItem(value, "id")->valueint;
+			int s = cJsonGetInt(value, "id");
 			recvSubtitleTrackSelected(0, s);
 			return;
 		}
@@ -285,9 +287,9 @@ void GstPlayer::handleJsonOutput(cJSON *json)
 	else if (!strcmp(key, "s_c"))
 	{
 		subtitleStream s;
-		s.id = cJSON_GetObjectItem(value, "id")->valueint;
-		s.description = cJSON_GetObjectItem(value, "e")->valuestring;
-		s.language_code = cJSON_GetObjectItem(value, "n")->valuestring;
+		s.id = cJsonGetInt(value, "id");
+		s.description = cJsonGetStr(value, "e");
+		s.language_code = cJsonGetStr(value, "n");
 		recvSubtitleTrackCurrent(0, s);
 	}
 	else if (!strcmp(key, "s_l"))
@@ -297,9 +299,9 @@ void GstPlayer::handleJsonOutput(cJSON *json)
 		{
 			cJSON *subitem=cJSON_GetArrayItem(value,i);
 			subtitleStream s;
-			s.id = cJSON_GetObjectItem(subitem, "id")->valueint; 
-			s.description = cJSON_GetObjectItem(subitem, "e")->valuestring;
-			s.language_code = cJSON_GetObjectItem(subitem, "n")->valuestring;
+			s.id = cJsonGetInt(subitem, "id"); 
+			s.description = cJsonGetStr(subitem, "e");
+			s.language_code = cJsonGetStr(subitem, "n");
 			streams.push_back(s);
 		}
 		recvSubtitleTracksList(0, streams);
@@ -307,43 +309,43 @@ void GstPlayer::handleJsonOutput(cJSON *json)
 	else if (!strcmp(key, "PLAYBACK_SUBTITLE"))
 	{
 		subtitleMessage s;
-		s.start_ms = cJSON_GetObjectItem(value, "start")->valueint;
-		s.duration_ms = cJSON_GetObjectItem(value, "duration")->valueint;
+		s.start_ms = cJsonGetInt(value, "start");
+		s.duration_ms = cJsonGetInt(value, "duration");
 		s.end_ms = s.start_ms + s.duration_ms;
-		s.text = cJSON_GetObjectItem(value, "text")->valuestring;
+		s.text = cJsonGetStr(value, "text");
 		recvSubtitleMessage(s);
 	}
 	else if (!strcmp(key, "PLAYBACK_LENGTH"))
 	{
-		if (!cJSON_GetObjectItem(value, "sts")->valueint)
+		if (!cJsonGetInt(value, "sts"))
 		{
-			float l = cJSON_GetObjectItem(value, "length")->valuedouble;
+			float l = cJsonGetDouble(value, "length");
 			recvLength(0, l * 1000);
 		}
 	}
 	else if (!strcmp(key, "J"))
 	{
-		int positionInMs = cJSON_GetObjectItem(value, "ms")->valueint;
+		int positionInMs = cJsonGetInt(value, "ms");
 		recvPosition(0, positionInMs);
 	}
 	else if (!strcmp(key, "GST_ERROR"))
 	{
 		errorMessage e;
-		e.message = cJSON_GetObjectItem(value, "msg")->valuestring;
-		//e.code = cJSON_GetObjectItem(value, "code")->valueint;
+		e.message = cJsonGetStr(value, "msg");
+		//e.code = cJsonGetInt(value, "code");
 		recvErrorMessage(e);
 	}
 	else if (!strcmp(key, "GST_MISSING_PLUGIN"))
 	{
 		errorMessage e;
 		e.message = "GStreamer plugin ";
-		e.message += cJSON_GetObjectItem(value, "msg")->valuestring;
+		e.message += cJsonGetStr(value, "msg");
 		e.message += " is not available!";
 		recvErrorMessage(e);
 	}
 	else if (!strcmp(key, "PLAYBACK_STOP"))
 	{
-		if (!cJSON_GetObjectItem(value, "sts")->valueint)
+		if (!cJsonGetInt(value, "sts"))
 		{
 			//recvStopped(0);
 			return;
@@ -352,7 +354,7 @@ void GstPlayer::handleJsonOutput(cJSON *json)
 	}
 	else if (!strcmp(key, "PLAYBACK_CONTINUE"))
 	{
-		if (!cJSON_GetObjectItem(value, "sts")->valueint)
+		if (!cJsonGetInt(value, "sts"))
 		{
 			recvResumed(0);
 			return;
@@ -361,7 +363,7 @@ void GstPlayer::handleJsonOutput(cJSON *json)
 	}
 	else if (!strcmp(key, "PLAYBACK_PAUSE"))
 	{
-		if (!cJSON_GetObjectItem(value, "sts")->valueint)
+		if (!cJsonGetInt(value, "sts"))
 		{
 			recvPaused(0);
 			return;
@@ -370,13 +372,13 @@ void GstPlayer::handleJsonOutput(cJSON *json)
 	}
 	else if (!strcmp(key, "PLAYBACK_FASTFORWARD"))
 	{
-		if (!cJSON_GetObjectItem(value, "sts")->valueint)
+		if (!cJsonGetInt(value, "sts"))
 		{
 		}
 	}
 	else if (!strcmp(key, "PLAYBACK_SEEK_ABS"))
 	{
-		if (!cJSON_GetObjectItem(value, "sts")->valueint)
+		if (!cJsonGetInt(value, "sts"))
 		{
 			//FIXME
 			recvSeekTo(0, 0);
@@ -386,7 +388,7 @@ void GstPlayer::handleJsonOutput(cJSON *json)
 	}
 	else if (!strcmp(key, "PLAYBACK_SEEK"))
 	{
-		if (!cJSON_GetObjectItem(value, "sts")->valueint)
+		if (!cJsonGetInt(value, "sts"))
 		{
 			recvSeekRelative(0, 0);
 			return;

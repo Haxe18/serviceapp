@@ -316,6 +316,9 @@ public:
 	}
 	~PlayerBackend()
 	{
+		// join the backend thread FIRST: its recv* callbacks dereference
+		// and even delete/replace the pCurrent... / pErrorMessage objects
+		stop();
 		if (pErrorMessage != NULL)
 			delete pErrorMessage;
 		if (pCurrentVideo != NULL)
@@ -324,7 +327,6 @@ public:
 			delete pCurrentAudio;
 		if (pCurrentSubtitle != NULL)
 			delete pCurrentSubtitle;
-		stop();
 		pthread_mutex_destroy(&mWaitMutex);
 		pthread_cond_destroy(&mWaitCond);
 		pthread_mutex_destroy(&mWaitForStopMutex);
