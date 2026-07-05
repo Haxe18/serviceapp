@@ -313,7 +313,10 @@ int M3U8VariantsExplorer::getVariantsFromMasterUrl(const std::string& url, Heade
                 }
                 else
                 {
-                    if (strlen(lineBuffer) > 0 && lineBuffer[0] == '/')
+                    if (strlen(lineBuffer) > 1 && lineBuffer[0] == '/' && lineBuffer[1] == '/')
+                        // scheme-relative URL "//host/path": keep the master's scheme
+                        m3u8StreamInfo.url = purl.proto().append(":").append(lineBuffer);
+                    else if (strlen(lineBuffer) > 0 && lineBuffer[0] == '/')
                         m3u8StreamInfo.url = purl.proto().append("://").append(purl.host()).append(lineBuffer);
                     else
                         m3u8StreamInfo.url = url.substr(0, url.rfind('/') + 1) + lineBuffer;
@@ -327,8 +330,12 @@ int M3U8VariantsExplorer::getVariantsFromMasterUrl(const std::string& url, Heade
                 if (!strncmp(lineBuffer, M3U8_STREAM_INFO, 17))
                 {
                     m3u8StreamInfoParsing = true;
+                    m3u8StreamInfo = M3U8StreamInfo();  // don't inherit prev variant's attrs
                     std::string parsed(lineBuffer);
-                    parseStreamInfoAttributes(parsed.substr(18).c_str(), m3u8StreamInfo);
+                    // guard: a bare "#EXT-X-STREAM-INF" (len 17, no ":attrs")
+                    // makes substr(18) throw std::out_of_range -> uncaught ->
+                    // abort of the whole enigma2 process
+                    parseStreamInfoAttributes(parsed.size() > 18 ? parsed.substr(18).c_str() : "", m3u8StreamInfo);
                 }
                 else
                 {

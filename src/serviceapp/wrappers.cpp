@@ -276,7 +276,11 @@ ssize_t writeAll(SSL *ssl, int fd, const void *buf, size_t count)
 				if (error == SSL_ERROR_WANT_WRITE)
 					continue;
 				fprintf(stderr, "[writeAll(SSL) error: %s", ERR_error_string(error, NULL));
-                        }
+				// hard error: bail out. Without the return, handledcount +=
+				// (negative retval) underflows size_t and the dead SSL is
+				// hammered in a busy loop
+				return retval;
+			}
 		}
 		else
 		{

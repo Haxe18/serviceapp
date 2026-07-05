@@ -17,6 +17,8 @@ struct M3U8StreamInfo
     // TODO audio/video/subtitles..
     unsigned long int bitrate;
 
+    M3U8StreamInfo(): bitrate(0) {}
+
     bool operator<(const M3U8StreamInfo& m) const
     {
         return bitrate < m.bitrate;
