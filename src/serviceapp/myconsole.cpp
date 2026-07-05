@@ -35,7 +35,13 @@ int bidirpipe(int pfd[], const char *cmd , const char * const argv[], const char
                 close(pfderr[0]) == -1 || close(pfderr[1]) == -1 )
             _exit(0);
 
-        for (unsigned int i=3; i < 90; ++i )
+        /* enigma2 easily holds >90 open fds (sockets, timers, dvb devices);
+         * anything above the old hardcoded limit leaked into the exec'd
+         * player and kept sockets/devices open there */
+        long maxfd = sysconf(_SC_OPEN_MAX);
+        if (maxfd <= 0)
+            maxfd = 1024;
+        for (long i=3; i < maxfd; ++i )
             close(i);
 
         if (cwd)
