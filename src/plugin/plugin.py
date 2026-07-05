@@ -19,6 +19,35 @@ from . import _
 import serviceapp_client
 
 
+def _patch_picon_resolver():
+    # The enigma core PiconResolver only maps service types 4097/8193 onto the
+    # DVB-style picon name (1_...); serviceapp's own types 5001 (gstplayer) and
+    # 5002 (exteplayer3) have no such fallback, so their picons (named 1_0_19_..
+    # like DVB) are never found. Teach the resolver about them here -- from the
+    # plugin that introduces those types, so it survives enigma2 updates.
+    try:
+        from Tools.PiconResolver import PiconResolver
+        if getattr(PiconResolver, "_sa_patched", False):
+            return
+        _orig = PiconResolver.getPngName
+
+        @staticmethod
+        def _getPngName(ref, nameCache, findPicon):
+            x = ref.split(':')
+            if len(x) >= 11 and x[0] in ('5001', '5002'):
+                x[0] = '1'  # IPTV services share the DVB picon naming
+                ref = ':'.join(x)
+            return _orig(ref, nameCache, findPicon)
+
+        PiconResolver.getPngName = _getPngName
+        PiconResolver._sa_patched = True
+    except Exception:
+        pass  # picon support is optional; never break plugin load over it
+
+
+_patch_picon_resolver()
+
+
 SINKS_DEFAULT = ("", "")
 SINKS_EXPERIMENTAL = ("dvbvideosinkexp", "dvbaudiosinkexp")
 
