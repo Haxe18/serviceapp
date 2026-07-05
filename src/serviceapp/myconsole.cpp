@@ -298,8 +298,8 @@ void eConsoleContainer::readyWrite(int what)
             d.dataSent += wr;
         if (d.dataSent == d.len)
         {
-            outbuf.pop();
             delete [] d.data;
+            outbuf.pop();
             if ( filefd[0] == -1 )
             /* emit */ dataSent(0);
         }
