@@ -285,7 +285,7 @@ class PlayerBackend: public Object, public eThread, public eMainloop_native, pub
 	void recvVideoTrackCurrent(int status, videoStream& stream);
 	void recvSeekTo(int status, int seconds){eDebug("PlayerBackend::recvSeekTo %ds", seconds);}
 	void recvSeekRelative(int status, int seconds){eDebug("PlayerBackend::recvSeekRelative %ds", seconds);}
-	void recvErrorMessage(errorMessage& message){pErrorMessage = new errorMessage(message);};
+	void recvErrorMessage(errorMessage& message){ if (pErrorMessage) delete pErrorMessage; pErrorMessage = new errorMessage(message);};
 	void recvSubtitleMessage(subtitleMessage& sub);
 
 public:

@@ -25,7 +25,7 @@ void PlayerApp::handleOutput(const std::string& mydata)
 	{
 		if (truncated)
 		{
-			if (mydata[pos-1] != '}')
+			if (pos == 0 || mydata[pos-1] != '}')
 			{
 				jsonstr = "";
 				truncated = 0;
@@ -99,7 +99,7 @@ int PlayerApp::processStart(eMainloop *context)
 	CONNECT(console->stderrAvail, PlayerApp::stderrAvail);
 	const std::vector<std::string> args = buildCommand();
 	eDebugNoNewLine("PlayerApp::processStart: ");
-	char **cargs = (char **) malloc(sizeof(char *) * args.size()+1);
+	char **cargs = (char **) malloc(sizeof(char *) * (args.size()+1));
 	for (size_t i=0; i <= args.size(); i++)
 	{
 		// execvp needs args array terminated with NULL
@@ -166,6 +166,13 @@ void WaitThread::thread()
 	}
 	ts.tv_sec += timeout / 1000;
 	ts.tv_nsec += (timeout % 1000) * 1000000;
+	// normalise: pthread_cond_timedwait requires tv_nsec in [0, 1e9); an
+	// unnormalised value returns EINVAL immediately (mistaken for "in time")
+	if (ts.tv_nsec >= 1000000000L)
+	{
+		ts.tv_sec += ts.tv_nsec / 1000000000L;
+		ts.tv_nsec %= 1000000000L;
+	}
 	eDebug("WaitThread - waiting for %ldms", timeout);
 	if (pthread_cond_timedwait(&cond, &mutex, &ts) == ETIMEDOUT)
 	{
@@ -440,7 +447,8 @@ void PlayerBackend::gotMessage(const PlayerBackend::Message& message)
 			break;
 		case Message::tStop:
 			eDebug("PlayerBackend::gotMessage - tStop");
-			mTimer->stop();
+			if (mTimer)
+				mTimer->stop();
 			pPlayer->sendStop();
 			break;
 		case Message::tKill:
