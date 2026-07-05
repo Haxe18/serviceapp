@@ -175,8 +175,14 @@ class ServiceAppSettings(ConfigListScreen, Screen):
         self.build_configlist()
 
     def deinit_config(self):
-        del config_serviceapp.servicemp3.player.notifiers[:]
-        del config_serviceapp.servicemp3.replace.notifiers[:]
+        # DreamOS config.py exposes notifiers as a read-only property whose
+        # getter returns a fresh copy -- "del ...notifiers[:]" (the OpenPLi
+        # idiom) only mutates that throwaway list, so the lambdas stayed
+        # registered on the global config objects forever, referencing the
+        # closed screen (crash on next change + leak). clearNotifiers() is
+        # the API that actually removes them.
+        config_serviceapp.servicemp3.player.clearNotifiers()
+        config_serviceapp.servicemp3.replace.clearNotifiers()
 
     def gstplayer_options(self, gstplayer_options_cfg):
         config_list = []
@@ -201,7 +207,7 @@ class ServiceAppSettings(ConfigListScreen, Screen):
         config_list.append(getConfigListEntry("  " + _("DTS software decoding"),
             exteplayer3_options_cfg.dts_swdecoding, _("Turn on DTS software decoding.")))
         config_list.append(getConfigListEntry("  " + _("MP3 software decoding"),
-            exteplayer3_options_cfg.dts_swdecoding, _("Turn on MP3 software decoding.")))
+            exteplayer3_options_cfg.mp3_swdecoding, _("Turn on MP3 software decoding.")))
         config_list.append(getConfigListEntry("  " + _("WMA software decoding"),
             exteplayer3_options_cfg.wma_swdecoding, _("Turn on WMA1, WMA2, WMA/PRO software decoding.")))
         config_list.append(getConfigListEntry("  " + _("Stereo downmix"),
