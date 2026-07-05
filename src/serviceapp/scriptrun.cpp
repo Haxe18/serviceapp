@@ -42,7 +42,7 @@ void scriptrun::run(eMainloop *context)
     for (size_t i = 0;  i < m_params.size(); i++)
         args.push_back(m_params[i]);
 
-    char **cargs = (char **) malloc(sizeof(char *) * args.size()+1);
+    char **cargs = (char **) malloc(sizeof(char *) * (args.size()+1));
     for (size_t i=0; i <= args.size(); i++)
     {
         // execvp needs args array terminated with NULL
@@ -60,7 +60,15 @@ void scriptrun::run(eMainloop *context)
                 eDebugNoNewLine("%s ", cargs[i]);
         }
     }
-    m_console->execute(context, cargs[0], cargs);
+    int ret = m_console->execute(context, cargs[0], cargs);
+    // vfork suspends the parent until execvp, so freeing here is safe
+    for (size_t i=0; i < args.size(); i++)
+        free(cargs[i]);
+    free(cargs);
+    // if the process never started, appClosed will never fire -> the caller
+    // would wait forever; drive the end-of-script path ourselves
+    if (ret < 0)
+        scriptEnded(-1);
 }
 
 void scriptrun::stop()
@@ -69,14 +77,22 @@ void scriptrun::stop()
         m_console->sendCtrlC();
 }
 
+void scriptrun::kill()
+{
+    if (m_console && m_console->running())
+        m_console->kill();
+}
+
 ResolveUrl::ResolveUrl(const std::string &url):
 
+    m_scriptrun(0),
     m_url(url),
     m_success(0),
-    mStopped(false),
     mThreadRunning(false),
+    mStopped(false),
     mMessageMain(eApp, 1),
-    mMessageThread(this, 1)
+    mMessageThread(this, 1),
+    mWaitForStop(false)
 {
     eDebug("ResolveUrl::ResolveUrl %s", url.c_str());
     CONNECT(mMessageThread.recv_msg, ResolveUrl::gotMessage);
@@ -117,7 +133,17 @@ void ResolveUrl::stop()
     mStopped = true;
     if (mThreadRunning)
     {
+        // send SIGINT, wait up to 10s for the script to die (scriptEnded
+        // clears mWaitForStop), then escalate to SIGKILL -- otherwise a
+        // hung/SIGINT-ignoring script would make the join below block the
+        // enigma2 main thread forever (GUI freeze / watchdog reboot).
+        mWaitForStop = true;
+        WaitThread t(mWaitForStopMutex, mWaitForStopCond, mWaitForStop, 10000);
+        t.run();
         mMessageThread.send(Message(Message::tStop));
+        t.kill();
+        if (t.isTimedOut() && m_scriptrun)
+            m_scriptrun->kill();
     }
     kill();
 }
@@ -125,7 +151,10 @@ void ResolveUrl::stop()
 std::string ResolveUrl::getUrl()
 {
     std::string url = m_scriptrun->getStdOut();
-    url = url.substr(0, url.size() - 1);
+    // strip trailing newline(s) only if present -- do not blindly drop the
+    // last character (a script using printf without \n would lose a byte)
+    while (!url.empty() && (url[url.size() - 1] == '\n' || url[url.size() - 1] == '\r'))
+        url.erase(url.size() - 1);
     return url;
 }
 

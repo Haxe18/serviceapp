@@ -30,6 +30,7 @@ public:
     ~scriptrun();
     void run(eMainloop *context);
     void stop();
+    void kill();
 
     std::string getStdOut(){return m_stdout;}
     std::string getStdErr(){return m_stderr;}
