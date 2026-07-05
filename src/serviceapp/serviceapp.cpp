@@ -481,9 +481,13 @@ void eServiceApp::pushSubtitles()
 		if (subtitle_fps != m_prev_subtitle_fps)
 		{
 			m_prev_subtitle_fps = subtitle_fps;
+			// the selected track may have vanished after a getSubtitleList()
+			// refresh -> getTrackPosition returns -1; indexing with that
+			// would read out of bounds. Keep the already-loaded pages then.
 			ssize_t track_pos = getTrackPosition(*m_selected_subtitle_track);
 			const subtitleMap *submap = NULL;
-			submap = m_subtitle_manager.load(m_subtitle_streams[track_pos].path, m_framerate, subtitle_fps);
+			if (track_pos >= 0)
+				submap = m_subtitle_manager.load(m_subtitle_streams[track_pos].path, m_framerate, subtitle_fps);
 			if (submap)
 			{
 				m_prev_subtitle_message = NULL;
@@ -1026,18 +1030,28 @@ RESULT eServiceApp::getCachedSubtitle(struct SubtitleTrack &track)
 	if (!select_embedded)
 	{
 		struct SubtitleTrack tmp_track = *external_tracks.begin();
-		subtitleStream tmp_stream = m_subtitle_streams[getTrackPosition(tmp_track)];
-		std::string video_base, subtitle_base, extension;
-		splitExtension(m_ref.path, video_base, extension);
-		splitExtension(tmp_stream.path, subtitle_base, extension);
-		if (video_base == subtitle_base || external_tracks.size() == 1)
+		ssize_t tmp_pos = getTrackPosition(tmp_track);
+		if (tmp_pos < 0)
 		{
-			track = tmp_track;
-			ret = 0;
+			// defensive: same unchecked -1 indexing class as in
+			// pushSubtitles; fall back to embedded tracks if any
+			select_embedded = !embedded_tracks.empty();
 		}
 		else
 		{
-			select_embedded = !embedded_tracks.empty();
+			subtitleStream tmp_stream = m_subtitle_streams[tmp_pos];
+			std::string video_base, subtitle_base, extension;
+			splitExtension(m_ref.path, video_base, extension);
+			splitExtension(tmp_stream.path, subtitle_base, extension);
+			if (video_base == subtitle_base || external_tracks.size() == 1)
+			{
+				track = tmp_track;
+				ret = 0;
+			}
+			else
+			{
+				select_embedded = !embedded_tracks.empty();
+			}
 		}
 	}
 	if (select_embedded)
