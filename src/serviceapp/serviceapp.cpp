@@ -250,6 +250,7 @@ eServiceApp::~eServiceApp()
 	delete player;
 	delete extplayer;
 	delete m_resolver;
+	delete m_selected_subtitle_track;
 
 	//if (m_subtitle_widget) m_subtitle_widget->destroy();
 	m_subtitle_widget = 0;
@@ -937,6 +938,7 @@ RESULT eServiceApp::enableSubtitles(iSubtitleUser *user, struct SubtitleTrack &t
 	m_subtitle_sync_timer->stop();
 	m_prev_subtitle_message = NULL;
 	m_subtitle_pages = NULL;
+	delete m_selected_subtitle_track;
 	m_selected_subtitle_track = NULL;
 
 	m_decoder_time_valid_state = 0;
@@ -975,7 +977,10 @@ RESULT eServiceApp::enableSubtitles(iSubtitleUser *user, struct SubtitleTrack &t
 		eWarning("eServiceApp::enableSubtitles - not supported track page_number %d", track.page_number);
 		return -1;
 	}
-	m_selected_subtitle_track = &(m_subtitle_tracks[track_pos]);
+	// own a standalone copy: getSubtitleList() clears m_subtitle_tracks
+	// while playing (the UI calls it to repopulate), which would leave a
+	// pointer into freed vector storage dangling -> UAF in pushSubtitles.
+	m_selected_subtitle_track = new SubtitleTrack(m_subtitle_tracks[track_pos]);
 	m_subtitle_widget = user;
 	return 0;
 }
@@ -987,6 +992,7 @@ RESULT eServiceApp::disableSubtitles()
 	m_prev_subtitle_message = NULL;
 	m_embedded_subtitle_pages.clear();
 	m_subtitle_pages = NULL;
+	delete m_selected_subtitle_track;
 	m_selected_subtitle_track = NULL;
 	//if (m_subtitle_widget) m_subtitle_widget->destroy();
 	m_subtitle_widget = 0;
