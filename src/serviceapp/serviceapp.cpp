@@ -1193,7 +1193,11 @@ int eServiceApp::getInfo(int w)
 {
 	switch (w)
 	{
-	case sServiceref: return m_ref;
+	// enigma2 contract: getInfo(sServiceref) must return resIsString so the
+	// caller fetches the value via getInfoString(sServiceref). Returning m_ref
+	// (not -2) made Converter/ServiceName's REFERENCE mode yield "N/A" for the
+	// running service (ref=None path) -> no InfoBar picon for 5002 services.
+	case sServiceref: return resIsString;
 	case sVideoHeight: return m_height;
 	case sVideoWidth: return m_width;
 	case sFrameRate: return m_framerate;
