@@ -379,7 +379,9 @@ void eServiceApp::updateEpgCacheNowNext()
 	}
 	if (next)
 	{
-		time_t now = eDVBLocalTimeHandler::getInstance()->nowTime();
+		// DreamOS has no eDVBLocalTimeHandler::nowTime(); system time is the
+		// synced reference there
+		time_t now = ::time(0);
 		refreshtime = (int)(next->getBeginTime() - now) + 3;
 		if (refreshtime <= 0 || refreshtime > 60)
 		{

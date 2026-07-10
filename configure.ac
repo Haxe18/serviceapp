@@ -13,17 +13,10 @@ PKG_CHECK_MODULES(ENIGMA2, enigma2)
 PKG_CHECK_MODULES(UCHARDET, uchardet)
 PKG_CHECK_MODULES(OPENSSL, openssl)
 
-have_mhw=no
-AC_CHECK_HEADER([enigma2/lib/dvb/lowlevel/mhw.h], 
-                 [have_mhw=yes], [])
-if test "x${have_mhw}" = xyes; then
-    AC_DEFINE([HAVE_EPG])
-else
-    echo "-------------------------------------------"
-    echo " Unable to find mhw.h                      "
-    echo " Building a serviceapp without EPG support "
-    echo "-------------------------------------------"
-fi
+dnl Upstream probed for OpenPLi's lowlevel/mhw.h as a proxy for EPG support;
+dnl DreamOS does not ship that header but always provides eEPGCache
+dnl (lib/dvb/epgcache.h). This branch targets DreamOS only -> always on.
+AC_DEFINE([HAVE_EPG])
 
 AC_DEFINE([DEBUG])
 
